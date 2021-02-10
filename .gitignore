@@ -1,0 +1,10 @@
+config.ini
+auth_info.txt
+session.session
+venv
+.session
+.session-journal
+test_dir
+__pycache__
+run.bat
+test_dir.rar
