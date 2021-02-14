@@ -1,11 +1,10 @@
 config.ini
 auth_info.txt
-session.session
 venv
-.session
-.session-journal
+*.session
 test_dir
 __pycache__
 run.bat
 test_dir.rar
 .vscode
+*.session-journal

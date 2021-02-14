@@ -1,10 +1,9 @@
 import os
+import sys
 from configparser import ConfigParser
 from pathlib import Path
 
 from telethon.sync import TelegramClient, events
-
-import fileExplorer
 
 API_ID = 0
 API_HASH = ''
@@ -17,31 +16,60 @@ def configure(channelName : str, baseDir : str):
     global API_ID
     global API_HASH
     global CHANNEL_ID
+
     # Reading authentication params from config.ini
     config = ConfigParser()
-    config.read('config.ini')
+
+    try:
+        config.read('config.ini')		#try to read config file
+    except Exception as err:
+        print("Error : " , err.__class__)
+
     API_ID = config.getint('authentication', 'api_id')
     API_HASH = config.get('authentication', 'api_hash')
-    # reading channels from config.ini
-    CHANNEL_ID = config.getint('channels', channelName)
-    # base directory for current job
-    DIR = baseDir
 
-def progressBar(current, total, barLength = 50):
+    # reading channels from config.ini
+    if channelName != '':
+        CHANNEL_ID = config.getint('channels', channelName)
+    else:
+        print("Specify channel name")
+        exit()
+
+    # base directory for current job
+    if baseDir != '':
+        DIR = baseDir
+    else:
+        print("Specify ROOT folder!")
+        exit()
+
+
+def progressBar(current, total, barLength = 50):	# Draws a progress bar
     percent = float(current) * 100 / total
     bar   = '█' * int(percent/100 * barLength - 1) + '█'
     spaces  = ' ' * (barLength - len(bar))
-    print('Progress: [%s%s] %d %%' % (bar, spaces, percent), end='\r')
+    print('Progress: |%s%s| %d %%' % (bar, spaces, percent), end='\r')
 
-def deleteFile(file):
+def deleteFile(file):	# delete file method
     try:
         os.remove(file.path)
     except Exception as err:
         print("Error on Delete: " , err.__class__)
 
+def recursiveExplorer(path):
+    try:
+        for entry in os.scandir(path):
+            if entry.is_dir():
+                yield from recursiveExplorer(entry.path)
+            elif entry.name == '.SyncLock':
+                yield None
+            else:
+                yield entry
+    except Exception as err:
+        print("Error: " , err.__class__)
+        yield None
+
 def uploadFile(delete_on_complete = True):
-    #recursively iter thru all the files in the base directory
-    for file in fileExplorer.recursiveExplorer(DIR):
+    for file in recursiveExplorer(DIR):    #recursively iter thru all the files in the base directory
         if file != None:
             fileSize = os.path.getsize(file.path)
             if fileSize < MAX_FILE_SIZE:      #check if the file at hand is larger than 2GiB
@@ -58,11 +86,25 @@ def uploadFile(delete_on_complete = True):
             else:
                 print("FILE TOO BIG!:", fileName)
 
-def main():
-    configure(channelName= 'homework', baseDir='F:\\Homework folder\\new')
-    uploadFile()
+def getDirName():	# prompt to select Base Directory
+    import tkinter
+    from tkinter import filedialog
 
+    root = tkinter.Tk()
+    root.withdraw()
+
+    path = ''
+    while path == '':
+        print('SELECT BASE DIRETORY!')
+        path = filedialog.askdirectory()
+
+    return str.replace(path, '/','//')
+
+def main():
+    configure(channelName= 'homework', baseDir= getDirName())
+    uploadFile(delete_on_complete=True)
 
 if __name__ == '__main__':
+	#handle args
     main()
     exit()
