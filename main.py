@@ -54,6 +54,7 @@ def deleteFile(file):	# delete file method
         os.remove(file.path)
     except Exception as err:
         print("Error on Delete: " , err.__class__)
+        exit()
 
 def recursiveExplorer(path):
     try:
@@ -68,13 +69,14 @@ def recursiveExplorer(path):
         print("Error: " , err.__class__)
         yield None
 
-def uploadFile(delete_on_complete = True):
+def uploadFile(delete_on_complete = False):
     for file in recursiveExplorer(DIR):    #recursively iter thru all the files in the base directory
         if file != None:
             fileSize = os.path.getsize(file.path)
             if fileSize < MAX_FILE_SIZE:      #check if the file at hand is larger than 2GiB
-                fileName = str(Path(file.path)).replace(DIR + '\\', '')     # cleaning file name by removing base directory and trailing '\'
-
+                cleaned_dir_name = DIR.replace('//','\\')
+                fileName = str(Path(file.path)).replace(cleaned_dir_name + '\\', '')     # cleaning file name by removing base directory and trailing '\'
+                
                 print('Uploading: ' + fileName)
                 with TelegramClient('session', API_ID, API_HASH) as client:
                     client.send_file(entity=CHANNEL_ID, file=file.path, caption=fileName, force_document=False, progress_callback=progressBar, supports_streaming=True, fileSize=fileSize)
@@ -102,7 +104,12 @@ def getDirName():	# prompt to select Base Directory
 
 def main():
     configure(channelName= 'homework', baseDir= getDirName())
-    uploadFile(delete_on_complete=True)
+
+    delete_on_complete = input("Delete on complete? Y/N \n")
+    if delete_on_complete in ['Y','y','Yes','YES','yes','True','TRUE','true'] : delete_on_complete = True
+    else: delete_on_complete = False
+
+    uploadFile(delete_on_complete=delete_on_complete)
 
 if __name__ == '__main__':
 	#handle args
