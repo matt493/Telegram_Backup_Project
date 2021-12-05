@@ -88,7 +88,7 @@ def uploadFile(delete_on_complete = False):
             else:
                 print("FILE TOO BIG!:", fileName)
 
-def getDirName():	# prompt to select Base Directory
+def getDirName():	# GUI prompt to select Base Directory
     import tkinter
     from tkinter import filedialog
 
